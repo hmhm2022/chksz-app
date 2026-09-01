@@ -1,0 +1,42 @@
+/* CHKSZ Music 移动版设计 tokens —— 深色沉浸式（类 QQ音乐/网易云） */
+:root {
+  color-scheme: dark;
+
+  /* 色板 */
+  --bg: #0f1115;
+  --card: #181a20;
+  --text: #e8eaed;
+  --text-secondary: #9aa0a6;
+  --accent: #1db954;
+  --accent-dim: rgba(29, 185, 84, 0.14);
+  /* 收藏心形专用色：红心（区别于全局 accent 绿） */
+  --favorite: #ec4141;
+  --favorite-dim: rgba(236, 65, 65, 0.14);
+  --border: rgba(255, 255, 255, 0.06);
+  --error: #f28b82;
+
+  /* 禁用态通用透明度 */
+  --opacity-disabled: 0.5;
+
+  /* 圆角 */
+  --radius-card: 12px;
+  --radius-lg: 18px;
+  --radius-full: 999px;
+
+  /* 间距 */
+  --space-xs: 6px;
+  --space-sm: 10px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+
+  /* 字号 */
+  --font-sm: 12px;
+  --font-base: 14px;
+  --font-lg: 18px;
+  --font-xl: 24px;
+
+  /* 底部结构高度 */
+  --player-height: 60px;
+  --tabbar-height: 56px;
+}

@@ -1,0 +1,40 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+dist-ssr/
+
+# vite
+*.local
+
+# Capacitor / Android 本机配置与构建产物
+android/local.properties
+android/app/build/
+android/build/
+android/.gradle/
+android/.kotlin/
+android/capacitor-cordova-android-plugins/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.DS_Store
+
+# logs
+*.log
+npm-debug.log*
+android/compile.log
+
+# IDE & tools
+.serena/
+docs/
+CLAUDE.md
+
+# temp files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~

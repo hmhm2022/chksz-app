@@ -1,0 +1,60 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+
+buildscript {
+
+    repositories {
+        maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
+        maven { url 'https://maven.aliyun.com/repository/google' }
+        maven { url 'https://maven.aliyun.com/repository/public' }
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.13.0'
+        classpath 'com.google.gms:google-services:4.4.4'
+        // Kotlin 支持（PlayerPlugin 等原生代码用 Kotlin 编写）
+        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:2.4.10'
+
+        // NOTE: Do not place your application dependencies here; they belong
+        // in the individual module build.gradle files
+    }
+}
+
+apply from: "variables.gradle"
+
+allprojects {
+    repositories {
+        maven { url 'https://maven.aliyun.com/repository/google' }
+        maven { url 'https://maven.aliyun.com/repository/central' }
+        maven { url 'https://maven.aliyun.com/repository/public' }
+        google()
+        mavenCentral()
+    }
+}
+
+// 每个子模块(如 :capacitor-android)的 buildscript 也要优先走 aliyun 镜像，
+// 否则会直接请求 dl.google.com 导致 TLS 握手失败。
+subprojects {
+    buildscript {
+        repositories {
+            maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
+            maven { url 'https://maven.aliyun.com/repository/google' }
+            maven { url 'https://maven.aliyun.com/repository/central' }
+            maven { url 'https://maven.aliyun.com/repository/public' }
+            google()
+            mavenCentral()
+        }
+    }
+
+    // 统一使用本机已安装的 build-tools 37.0.0(AGP 8.13 默认 35.0.0，本机没有且无法联网自动下载)
+    plugins.withId('com.android.application') {
+        android { buildToolsVersion = "37.0.0" }
+    }
+    plugins.withId('com.android.library') {
+        android { buildToolsVersion = "37.0.0" }
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}

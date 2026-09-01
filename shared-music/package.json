@@ -1,0 +1,20 @@
+{
+  "name": "shared-music",
+  "version": "0.3.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./contracts": "./src/contracts.ts",
+    "./api/client": "./src/api/client.ts",
+    "./api/request-queue": "./src/api/request-queue.ts",
+    "./api/timeout": "./src/api/timeout.ts",
+    "./api/cache": "./src/api/cache.ts",
+    "./api/compat": "./src/api/compat.ts",
+    "./api/music-service": "./src/api/music-service.ts",
+    "./api/adapters/*": "./src/api/adapters/*.ts",
+    "./storage/library-store": "./src/storage/library-store.ts",
+    "./storage/settings-store": "./src/storage/settings-store.ts",
+    "./storage/downloads-store": "./src/storage/downloads-store.ts",
+    "./storage/credentials": "./src/storage/credentials.ts"
+  }
+}
