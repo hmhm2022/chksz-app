@@ -7,7 +7,8 @@ interface ClientOptions {
   getKey: () => Promise<string>
   queue: RequestQueue
   fetcher?: typeof fetch
-  baseUrl?: string
+  /** 用户设置的 Chksz API 地址；不提供地址时客户端不可用。 */
+  baseUrl: string
   timeoutMs?: number
   /** 成功响应解析到免费额度头时回调（可用来落库，见 bridge/index.ts）。 */
   onQuota?: (freeQuota: number) => void
@@ -28,7 +29,7 @@ export class ChkszClient {
   private readonly getKey: () => Promise<string>
   private readonly queue: RequestQueue
   private readonly fetcher: (url: string, init?: RequestInit) => Promise<Response>
-  private readonly baseUrl: string
+  private baseUrl: string
   private readonly timeoutMs: number
   private readonly onQuota: ((freeQuota: number) => void) | undefined
   private freeQuotaRemaining: number | null = null
@@ -38,7 +39,7 @@ export class ChkszClient {
     this.queue = options.queue
     // fetch 必须保持 window/globalThis 上下文调用，否则浏览器抛 TypeError: Illegal invocation。
     this.fetcher = (url, init) => (options.fetcher ?? safeFetch)(url, init)
-    this.baseUrl = options.baseUrl ?? 'https://api.chksz.com'
+    this.baseUrl = options.baseUrl.trim()
     this.timeoutMs = options.timeoutMs ?? 15000
     this.onQuota = options.onQuota
   }
@@ -48,8 +49,16 @@ export class ChkszClient {
     return this.freeQuotaRemaining
   }
 
+  /** 设置用户填写的 API 地址；传空值会使后续 Chksz 请求被明确拒绝。 */
+  setBaseUrl(baseUrl: string): void {
+    this.baseUrl = baseUrl.trim()
+  }
+
   get<T>(path: string, params: Record<string, string | number>, signal?: AbortSignal): Promise<T> {
     return this.queue.schedule(async () => {
+      if (!this.baseUrl) {
+        throw new AppError({ code: 'BAD_REQUEST', message: '请先填写 API 地址' })
+      }
       const key = await this.getKey()
       const search = new URLSearchParams()
       for (const [name, value] of Object.entries(params)) search.set(name, String(value))

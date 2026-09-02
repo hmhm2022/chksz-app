@@ -19,14 +19,15 @@ import java.net.URL
  * - 酷狗 /api/kugou_music：新版顶层带 url，旧版嵌在 { data: { url, ... } } 里，需兼容
  */
 object ChkszApi {
-    private var baseUrl: String = "https://api.chksz.com"
+    @Volatile
+    private var baseUrl: String = ""
     private const val TAG = "ChkszApi"
     private const val TIMEOUT_MS = 15_000
     private const val MAX_ATTEMPTS = 3
     private const val RETRY_DELAY_MS = 400L
 
     fun setBaseUrl(url: String) {
-        baseUrl = url
+        baseUrl = url.trim()
     }
 
     /**
@@ -40,6 +41,7 @@ object ChkszApi {
      * JS 侧对网易云单独调用免费歌词接口即可（不产生额外额度消耗）。
      */
     fun resolvePlayback(track: QueueTrack, apiKey: String): ResolvedPlayback {
+        if (baseUrl.isBlank()) throw IllegalStateException("请先填写 API 地址")
         val path = buildPath(track)
         var lastError: Exception? = null
         for (attempt in 0 until MAX_ATTEMPTS) {

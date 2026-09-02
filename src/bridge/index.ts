@@ -13,9 +13,6 @@ import { playerBridge } from '../playerBridge'
 import { systemBridge } from '../systemBridge'
 import type { ChkszApi } from './types'
 
-/** ChKSz API 网关基址（与桌面版默认一致）。 */
-const BASE_URL = 'https://api.chksz.com'
-
 /** 验证密钥时用的一次性查询（与桌面版 validateAndSave 语义一致）。 */
 const VALIDATE_PATH = '/api/163_search'
 const VALIDATE_PARAMS = { keyword: '晴天', limit: 1 }
@@ -61,17 +58,21 @@ export function setupChkszBridge(): void {
   const settings = new SettingsStore(db)
   const downloads = new DownloadsStore(db)
   const quota = new QuotaStore(db)
-  // 从设置中读取 apiBaseUrl
-  let baseUrl = BASE_URL
-  settings.get().then(s => {
-    if (s.apiBaseUrl) baseUrl = s.apiBaseUrl
-  })
-  // 每次成功响应捕获到额度头时顺手落库（带当天日期）。消费的是本笔请求已产生的响应，不额外请求。
+  // 从设置中读取 apiBaseUrl；没有用户地址时保持空值，禁止 Chksz 请求。
   const client = new ChkszClient({
     getKey: () => credentials.getKey(),
     queue,
-    baseUrl,
+    baseUrl: '',
     onQuota: (freeQuota) => void quota.set({ freeQuota, date: todayKey() }),
+  })
+
+  const applyBaseUrl = (baseUrl: string) => {
+    client.setBaseUrl(baseUrl)
+    void playerBridge.setBaseUrl(baseUrl).catch(() => {})
+  }
+
+  settings.get().then(s => {
+    applyBaseUrl(s.apiBaseUrl)
   })
   // LibraryStore 实现 MusicService 需要的 NeteaseImportStore 接口（save/update/get/getImports），直接传入。
   // fetcher 必须用 safeFetch（经 globalThis.fetch 调用）而非裸 fetch：后者在部分 WebView 上会因
@@ -83,13 +84,15 @@ export function setupChkszBridge(): void {
       hasKey: () => credentials.hasKey(),
       // 语义与桌面版一致：先 trim，再用该 key 建临时 client 走一次真实查询；
       // 成功才落库，失败（密钥无效 / 网络错误 / 超时）原样抛给上层提示。
-      // baseUrl 可选：FirstRun 已经通过 testConnection 验证过连通性，此处仅做密钥有效性校验。
+      // 地址必须由调用方传入：FirstRun 会先测试该地址，此处再用同一地址校验密钥。
       validateAndSave: async (key: string, baseUrl?: string) => {
         const normalizedKey = key.trim()
         if (!normalizedKey) throw new Error('请输入 API 密钥')
         // 格式前缀快速失败（与 CredentialStore.setKey 同一约定），省一次无谓网络请求。
         if (!normalizedKey.startsWith('chksz_')) throw new Error('密钥格式不正确')
-        const candidate = new ChkszClient({ getKey: async () => normalizedKey, queue, baseUrl: baseUrl?.trim() || BASE_URL })
+        const normalizedBaseUrl = baseUrl?.trim() ?? ''
+        if (!normalizedBaseUrl) throw new Error('请输入 API 地址')
+        const candidate = new ChkszClient({ getKey: async () => normalizedKey, queue, baseUrl: normalizedBaseUrl })
         await candidate.get(VALIDATE_PATH, VALIDATE_PARAMS)
         await credentials.setKey(normalizedKey)
       },
@@ -146,7 +149,11 @@ export function setupChkszBridge(): void {
     },
     settings: {
       get: () => settings.get(),
-      update: (patch) => settings.update(patch),
+      update: async (patch) => {
+        const next = await settings.update(patch)
+        if (patch.apiBaseUrl !== undefined) applyBaseUrl(next.apiBaseUrl)
+        return next
+      },
     },
     downloads: {
       // Task 9+11 原生下载：先取可播放直链，再交给 SystemPlugin 后台写入公共 Download 目录。

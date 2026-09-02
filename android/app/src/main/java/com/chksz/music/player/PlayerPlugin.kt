@@ -341,6 +341,13 @@ class PlayerPlugin : Plugin() {
     }
 
     @PluginMethod
+    fun setBaseUrl(call: PluginCall) {
+        val url = call.getString("url")?.trim().orEmpty()
+        ChkszApi.setBaseUrl(url)
+        call.resolve()
+    }
+
+    @PluginMethod
     fun load(call: PluginCall) {
         val url = call.getString("url")
         if (url.isNullOrBlank()) {
@@ -576,7 +583,13 @@ class PlayerPlugin : Plugin() {
                 Log.w(tag, "resolveAndPlay failed for ${track.songKey}", e)
                 bridge.execute {
                     if (!isRequestCurrent(revision, index, songKey)) return@execute
-                    notifyListeners("onError", errorPayload("「${track.title}」暂时无法播放，已自动跳过"))
+                    val message = if (e.message == "请先填写 API 地址") {
+                        e.message!!
+                    } else {
+                        "「${track.title}」暂时无法播放，已自动跳过"
+                    }
+                    lastErrorMessage = message
+                    notifyListeners("onError", errorPayload(message))
                     autoSkipCount += 1
                     if (autoSkipCount >= queue.items.size) {
                         // 整单全部解析失败：停止递归，回推播完事件，避免死循环。

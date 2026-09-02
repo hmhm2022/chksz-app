@@ -66,6 +66,8 @@ export interface QuotaEvent {
  * 事件监听返回 PluginListenerHandle，记得在卸载时调用 handle.remove()。
  */
 export interface PlayerBridge {
+  /** 同步用户填写的 Chksz API 地址；为空时原生播放不可用。 */
+  setBaseUrl(url: string): Promise<void>
   load(url: string): Promise<void>
   play(): Promise<void>
   pause(): Promise<void>
@@ -122,6 +124,7 @@ export interface PlayerBridge {
  * - 额外带 addListener，用于订阅原生事件
  */
 interface NativePlayerPlugin {
+  setBaseUrl(options: { url: string }): Promise<void>
   load(options: { url: string }): Promise<void>
   play(): Promise<void>
   pause(): Promise<void>
@@ -148,6 +151,7 @@ const PlayerPlugin = registerPlugin<NativePlayerPlugin>('PlayerPlugin')
  * 播放桥实例：WebView 侧唯一入口，供 React UI 调用。
  */
 export const playerBridge: PlayerBridge = {
+  setBaseUrl: (url) => PlayerPlugin.setBaseUrl({ url }),
   load: (url) => PlayerPlugin.load({ url }),
   play: () => PlayerPlugin.play(),
   pause: () => PlayerPlugin.pause(),
